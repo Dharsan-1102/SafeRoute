@@ -1,0 +1,91 @@
+{
+  "zones": [
+    {
+      "id": 1,
+      "lat": 12.9716,
+      "lng": 77.5946,
+      "radius": 800,
+      "level": "high",
+      "name": "Isolated Industrial Area",
+      "reason": "Poor lighting, no police presence, isolated roads"
+    },
+    {
+      "id": 2,
+      "lat": 13.0827,
+      "lng": 80.2707,
+      "radius": 500,
+      "level": "medium",
+      "name": "Dark Alley Zone",
+      "reason": "Low street lighting, limited foot traffic after 9 PM"
+    },
+    {
+      "id": 3,
+      "lat": 12.9352,
+      "lng": 77.6245,
+      "radius": 600,
+      "level": "high",
+      "name": "Crime-Prone Area",
+      "reason": "Historical incident reports, limited CCTV coverage"
+    },
+    {
+      "id": 4,
+      "lat": 13.0102,
+      "lng": 80.2145,
+      "radius": 400,
+      "level": "medium",
+      "name": "Low Traffic Zone",
+      "reason": "Limited police patrol, isolated at night"
+    },
+    {
+      "id": 5,
+      "lat": 13.0600,
+      "lng": 80.2100,
+      "radius": 350,
+      "level": "medium",
+      "name": "Under-construction Area",
+      "reason": "Poor lighting, irregular crowd, limited visibility"
+    }
+  ],
+  "safeSpots": [
+    {
+      "id": 1,
+      "lat": 13.0500,
+      "lng": 80.2824,
+      "type": "police",
+      "name": "Marina Police Station",
+      "phone": "044-25367100"
+    },
+    {
+      "id": 2,
+      "lat": 13.0358,
+      "lng": 80.2448,
+      "type": "hospital",
+      "name": "Apollo Hospital",
+      "phone": "044-28293333"
+    },
+    {
+      "id": 3,
+      "lat": 13.0452,
+      "lng": 80.2427,
+      "type": "crowded",
+      "name": "T Nagar Market",
+      "phone": null
+    },
+    {
+      "id": 4,
+      "lat": 13.0600,
+      "lng": 80.2600,
+      "type": "police",
+      "name": "Egmore Police Post",
+      "phone": "044-28191100"
+    },
+    {
+      "id": 5,
+      "lat": 13.0750,
+      "lng": 80.2750,
+      "type": "hospital",
+      "name": "Government General Hospital",
+      "phone": "044-25305000"
+    }
+  ]
+}

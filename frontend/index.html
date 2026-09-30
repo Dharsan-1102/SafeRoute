@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SafeRoute — AI-Powered Women Safety Navigator</title>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- MOBILE TOGGLE -->
+  <button id="mobileToggle" class="mobile-toggle" aria-label="Open menu">
+    <i class="fas fa-shield-halved"></i>
+  </button>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="open">
+    <div class="sidebar-header">
+      <div class="logo-wrap">
+        <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+        <div>
+          <div class="logo-text">SafeRoute</div>
+          <div class="logo-sub">Women Safety Navigator</div>
+        </div>
+      </div>
+      <button id="closeSidebar" class="icon-btn close-sidebar-btn"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="sidebar-scroll">
+      <!-- TRAVEL MODE TOGGLE -->
+      <div class="travel-mode-bar">
+        <button class="tm-btn active" data-mode="driving"><i class="fas fa-car"></i> Drive</button>
+        <button class="tm-btn" data-mode="walking"><i class="fas fa-person-walking"></i> Walk</button>
+        <button class="tm-btn" data-mode="transit"><i class="fas fa-bus"></i> Transit</button>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="search-block">
+        <div id="recentBar" class="recent-bar" style="display:none">
+          <span class="recent-label"><i class="fas fa-clock-rotate-left"></i> Recent</span>
+          <div id="recentList" class="recent-list"></div>
+        </div>
+
+        <div class="search-row">
+          <div class="dot dot-blue"></div>
+          <div class="search-input-wrap">
+            <input id="startInput" type="text" placeholder="Your location" autocomplete="off" />
+            <div id="startSuggestions" class="suggestions-dropdown"></div>
+          </div>
+          <button class="locate-btn" id="locateBtn" title="Use GPS"><i class="fas fa-crosshairs"></i></button>
+        </div>
+
+        <div class="swap-row">
+          <div class="route-line-connector"></div>
+          <button id="swapBtn" class="swap-btn" title="Swap locations"><i class="fas fa-arrow-right-arrow-left"></i></button>
+        </div>
+
+        <div class="search-row">
+          <div class="dot dot-red"></div>
+          <div class="search-input-wrap">
+            <input id="destInput" type="text" placeholder="Where to?" autocomplete="off" />
+            <div id="destSuggestions" class="suggestions-dropdown"></div>
+          </div>
+        </div>
+
+        <button id="routeBtn" class="btn-primary"><i class="fas fa-route"></i> Find Safe Route</button>
+      </div>
+
+      <!-- SMART DESTINATION SUGGESTIONS -->
+      <div id="smartSuggestions" class="smart-suggestions" style="display:none">
+        <div class="section-title"><i class="fas fa-lightbulb"></i> Quick Safe Destinations</div>
+        <div id="suggestionList" class="suggestion-chips"></div>
+      </div>
+
+      <!-- ROUTE TYPE TABS -->
+      <div class="route-tabs" id="routeTabs" style="display:none">
+        <button class="tab-btn" data-pref="fastest"><i class="fas fa-bolt"></i> Fastest</button>
+        <button class="tab-btn active" data-pref="safest"><i class="fas fa-shield-alt"></i> Safest</button>
+        <button class="tab-btn" data-pref="balanced"><i class="fas fa-scale-balanced"></i> Balanced</button>
+      </div>
+
+      <!-- ROUTE ALTERNATIVES -->
+      <div id="altRoutesPanel" class="section-card" style="display:none">
+        <div class="section-title"><i class="fas fa-code-branch"></i> Route Options</div>
+        <div id="altRoutesList"></div>
+        <button id="shareRouteBtn" class="btn-ghost-sm" style="margin-top:8px;width:100%">
+          <i class="fas fa-share-nodes"></i> Share This Route
+        </button>
+      </div>
+
+      <!-- ROUTE PREVIEW -->
+      <div id="routePreview" class="route-preview" style="display:none">
+        <div class="section-title"><i class="fas fa-eye"></i> Route Preview</div>
+        <div id="previewStats" class="preview-stats"></div>
+        <div id="previewDangers" class="preview-dangers"></div>
+      </div>
+
+      <!-- SAFETY SCORE -->
+      <div id="safetyCard" class="safety-card" style="display:none">
+        <div class="sc-top">
+          <div>
+            <div class="sc-label">Safety Score</div>
+            <div id="safetyLabel" class="sc-rating">--</div>
+          </div>
+          <div class="sc-circle">
+            <svg viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="5"/>
+              <circle id="scoreArc" cx="30" cy="30" r="24" fill="none" stroke="#fff" stroke-width="5"
+                stroke-dasharray="150.8" stroke-dashoffset="150.8" stroke-linecap="round"
+                transform="rotate(-90 30 30)" style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+            <span id="safetyPct">0</span>
+          </div>
+        </div>
+        <div class="sc-bar"><div id="scFill" class="sc-fill"></div></div>
+        <div id="scRec" class="sc-rec"></div>
+        <div id="scFactors" class="sc-factors"></div>
+      </div>
+
+      <!-- RISK PARAMETERS PANEL -->
+      <div id="riskParams" class="risk-params" style="display:none">
+        <div class="section-title"><i class="fas fa-chart-line"></i> Risk Parameters</div>
+        <div id="paramList" class="param-list"></div>
+      </div>
+
+      <!-- ROUTE INFO + LIVE NAV BAR -->
+      <div id="routeInfo" class="section-card route-info-card" style="display:none">
+        <div class="ri-row">
+          <div class="ri-stat"><i class="fas fa-road"></i><span id="routeDistance">--</span> km</div>
+          <div class="ri-stat"><i class="fas fa-clock"></i><span id="routeTime">--</span> min</div>
+          <div class="ri-stat"><i class="fas fa-traffic-light"></i><span id="trafficStatus">--</span></div>
+        </div>
+        <div class="ri-eta-bar">
+          <div class="ri-stat"><i class="fas fa-flag-checkered"></i>ETA: <span id="etaCountdown" class="eta-val">--</span></div>
+          <div class="ri-stat"><i class="fas fa-location-arrow"></i><span id="distRemaining" class="dist-val">--</span></div>
+        </div>
+        <div class="live-nav-bar" id="liveNavBar" style="display:none">
+          <div class="nav-street" id="currentStreet"><i class="fas fa-road"></i> <span>--</span></div>
+          <div class="nav-speed" id="currentSpeed">0 <small>km/h</small></div>
+          <button id="voiceNavBtn" class="voice-btn" title="Toggle voice navigation">
+            <i class="fas fa-volume-high"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- LIVE TRACKING -->
+      <div id="liveTrackingPanel" class="section-card tracking-card" style="display:none">
+        <div class="section-title"><i class="fas fa-satellite-dish blink"></i> Live Tracking Active</div>
+        <div id="trackingCoords" class="track-coords">Acquiring position…</div>
+        <button id="stopTrackBtn" class="btn-sm btn-danger-sm"><i class="fas fa-stop-circle"></i> Stop Sharing</button>
+      </div>
+
+      <!-- CHECK-IN STATUS BAR -->
+      <div id="checkinStatusBar" class="checkin-status-bar" style="display:none">
+        <i class="fas fa-clock"></i>
+        <span id="checkinCountdown">--</span>
+        <button id="confirmArrivalBtn" class="btn-confirm-arrival"><i class="fas fa-check"></i> I'm Safe</button>
+      </div>
+
+      <!-- PANIC MODE BUTTON -->
+      <button id="panicModeBtn" class="btn-panic"><i class="fas fa-skull-crossbones"></i> PANIC MODE</button>
+
+      <!-- QUICK ACTIONS -->
+      <div class="quick-actions">
+        <button id="goSafeBtn" class="qa-btn qa-green"><i class="fas fa-shield-alt"></i><span>Go Safe</span></button>
+        <button id="fakecallBtn" class="qa-btn qa-blue"><i class="fas fa-phone-volume"></i><span>Fake Call</span></button>
+        <button id="reportBtn" class="qa-btn qa-orange"><i class="fas fa-flag"></i><span>Report</span></button>
+        <button id="checkinBtn" class="qa-btn qa-purple"><i class="fas fa-check-double"></i><span>Check In</span></button>
+      </div>
+
+      <!-- EMERGENCY ROW -->
+      <div class="emergency-row">
+        <button id="sosBtn" class="btn-sos"><i class="fas fa-exclamation-triangle"></i> SOS</button>
+        <button id="shareLocBtn" class="btn-share"><i class="fas fa-share-alt"></i> Share Live</button>
+      </div>
+
+      <!-- SAFE SPOTS NEARBY -->
+      <div id="safeSpotsPanel" class="section-card" style="display:none">
+        <div class="section-title"><i class="fas fa-map-pin"></i> Safe Spots Nearby</div>
+        <div id="safeSpotsList"></div>
+      </div>
+
+      <!-- NEARBY USERS -->
+      <div id="nearbyUsersPanel" class="section-card" style="display:none">
+        <div class="section-title"><i class="fas fa-users"></i> Nearby SafeRoute Users</div>
+        <div id="nearbyUsersList" class="nearby-users-list"></div>
+      </div>
+
+      <!-- INCIDENT FEED -->
+      <div class="section-card">
+        <div class="section-title">
+          <i class="fas fa-rss"></i> Recent Reports
+          <span id="reportCount" class="badge-count">0</span>
+        </div>
+        <div id="incidentFeed" class="incident-feed">
+          <div class="feed-empty">No recent reports in your area</div>
+        </div>
+      </div>
+
+      <!-- SAFETY ANALYTICS -->
+      <div id="safetyAnalytics" class="analytics-card" style="display:none">
+        <div class="section-title"><i class="fas fa-chart-simple"></i> Your Safety Stats</div>
+        <div id="analyticsContent" class="analytics-content"></div>
+      </div>
+
+      <!-- SAFETY TIPS -->
+      <div class="tips-card">
+        <div class="section-title"><i class="fas fa-lightbulb"></i> Safety Tips</div>
+        <div id="safetyTips"></div>
+      </div>
+
+      <!-- AI ASSISTANT BUTTON -->
+      <button id="aiAssistantBtn" class="ai-assistant-btn"><i class="fas fa-robot"></i> AI Safety Assistant</button>
+
+    </div>
+  </aside>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+  <!-- BOTTOM NAV BAR -->
+  <div id="bottomNavBar" class="bottom-nav-bar" style="display:none">
+    <div class="bnb-left"><div class="bnb-dist" id="bnbDist">--</div><div class="bnb-label">km remaining</div></div>
+    <div class="bnb-center"><div class="bnb-eta" id="bnbEta">--</div><div class="bnb-label">min</div></div>
+    <div class="bnb-right"><button id="bnbEndBtn" class="bnb-end-btn"><i class="fas fa-xmark"></i> End</button></div>
+  </div>
+
+  <!-- MAP CONTROLS -->
+  <div class="map-controls">
+    <button id="toggleMapStyle" class="map-ctrl-btn" title="Toggle day/night map"><i class="fas fa-moon"></i></button>
+    <button id="toggle3D" class="map-ctrl-btn" title="Toggle 3D view"><i class="fas fa-cube"></i></button>
+    <button id="toggleHeatmap" class="map-ctrl-btn" title="Toggle heatmap"><i class="fas fa-fire"></i></button>
+    <button id="toggleSafeZone" class="map-ctrl-btn" title="Toggle safe zones"><i class="fas fa-circle-dot"></i></button>
+    <button id="toggleRiskOverlay" class="map-ctrl-btn" title="Toggle risk overlay"><i class="fas fa-chart-line"></i></button>
+    <button id="zoomToMe" class="map-ctrl-btn" title="Zoom to my location"><i class="fas fa-location-crosshairs"></i></button>
+    <button id="compassBtn" class="map-ctrl-btn" title="Reset bearing"><i class="fas fa-compass"></i></button>
+    <button id="fullscreenBtn" class="map-ctrl-btn" title="Full screen map"><i class="fas fa-expand"></i></button>
+  </div>
+
+  <!-- PANEL BUTTONS -->
+  <div class="panel-btns">
+    <button id="openDirectionsBtn" class="panel-pill-btn"><i class="fas fa-list-ol"></i> Directions</button>
+    <button id="openContactsBtn" class="panel-pill-btn"><i class="fas fa-users"></i> Contacts</button>
+  </div>
+
+  <!-- DIRECTIONS PANEL -->
+  <div id="directionsPanel" class="side-panel">
+    <div class="panel-header">
+      <span><i class="fas fa-route"></i> Turn-by-Turn</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="startVoiceBtn" class="voice-toggle-btn"><i class="fas fa-volume-high"></i> Voice</button>
+        <button class="icon-btn" id="closeDirections"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div id="stepsList" class="steps-list"></div>
+  </div>
+
+  <!-- CONTACTS PANEL -->
+  <div id="contactsPanel" class="side-panel">
+    <div class="panel-header">
+      <span><i class="fas fa-users"></i> Trusted Contacts</span>
+      <button class="icon-btn" id="closeContacts"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="contacts-body">
+      <div class="add-contact-form">
+        <input id="cName" type="text" placeholder="Name" />
+        <input id="cPhone" type="tel" placeholder="+91 98765 43210" />
+        <button id="addContactBtn" class="btn-primary" style="margin-top:8px"><i class="fas fa-plus"></i> Add Contact</button>
+      </div>
+      <div id="contactList" class="contact-list"></div>
+    </div>
+  </div>
+
+  <!-- PANIC MODE OVERLAY -->
+  <div id="panicOverlay" class="panic-overlay" style="display:none">
+    <div class="panic-content">
+      <div class="panic-header">
+        <i class="fas fa-skull-crossbones"></i>
+        <span>EMERGENCY MODE</span>
+      </div>
+      <div class="panic-timer" id="panicTimer">SOS in 10</div>
+      <div class="panic-buttons">
+        <button id="panicSOS" class="panic-sos-btn"><i class="fas fa-exclamation-triangle"></i> SOS NOW</button>
+        <button id="panicCancel" class="panic-cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+      </div>
+      <div class="panic-instructions">Press SOS now or shake your phone for immediate help</div>
+    </div>
+  </div>
+
+  <!-- AI ASSISTANT MODAL -->
+  <div id="aiAssistantModal" class="modal-overlay" style="display:none">
+    <div class="modal-box" style="width:380px">
+      <div class="modal-title"><i class="fas fa-robot"></i> AI Safety Assistant</div>
+      <div id="aiMessages" class="ai-messages"></div>
+      <div class="ai-input-row">
+        <input id="aiInput" type="text" placeholder="Ask for safety advice..." />
+        <button id="aiSendBtn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <div class="modal-btns"><button id="closeAIModal" class="btn-ghost">Close</button></div>
+    </div>
+  </div>
+
+  <!-- FAKE CALL OVERLAY -->
+  <div id="fakeCallOverlay" class="fake-call-overlay" style="display:none">
+    <div class="fake-call-card">
+      <div class="caller-avatar"><i class="fas fa-user"></i></div>
+      <div class="caller-name" id="callerName">Amma</div>
+      <div class="caller-sub">Incoming call…</div>
+      <div class="call-timer" id="callTimer">0:00</div>
+      <div class="call-actions">
+        <button id="declineCall" class="call-btn decline"><i class="fas fa-phone-slash"></i><span>Decline</span></button>
+        <button id="acceptCall" class="call-btn accept"><i class="fas fa-phone"></i><span>Accept</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE CALL OVERLAY -->
+  <div id="activeCallOverlay" class="active-call-overlay" style="display:none">
+    <div class="active-call-card">
+      <div class="ac-name" id="activeCallerName">Amma</div>
+      <div class="ac-timer" id="activeCallTimer">0:00</div>
+      <div class="ac-status">Call in progress…</div>
+      <button id="endCall" class="end-call-btn"><i class="fas fa-phone-slash"></i> End Call</button>
+    </div>
+  </div>
+
+  <!-- REPORT MODAL -->
+  <div id="reportModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-title"><i class="fas fa-flag"></i> Report Unsafe Area</div>
+      <select id="reportType" class="modal-select">
+        <option value="1">Dark / Poorly Lit Area</option>
+        <option value="2">Suspicious Activity</option>
+        <option value="3">Harassment / Threat</option>
+        <option value="4">Unsafe Road Condition</option>
+        <option value="5">Other</option>
+      </select>
+      <textarea id="reportDesc" placeholder="Describe the situation (optional)..." rows="3"></textarea>
+      <div class="modal-btns">
+        <button id="submitReport" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Report</button>
+        <button id="cancelReport" class="btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECK-IN MODAL -->
+  <div id="checkinModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-title"><i class="fas fa-check-double"></i> Safe Arrival Check-In</div>
+      <p class="modal-desc">Set a timer. If you don't tap "I'm Safe" before it expires, your trusted contacts get an automatic alert.</p>
+      <label class="modal-label">Alert in (minutes):</label>
+      <input id="checkinMins" type="number" value="30" min="1" max="180" />
+      <div class="modal-btns">
+        <button id="startCheckin" class="btn-primary"><i class="fas fa-clock"></i> Start Timer</button>
+        <button id="cancelCheckinModal" class="btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE ROUTE MODAL -->
+  <div id="shareRouteModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-title"><i class="fas fa-share-nodes"></i> Share Route</div>
+      <div class="share-route-info" id="shareRouteInfo"></div>
+      <div class="share-copy-row">
+        <input id="shareRouteLink" type="text" readonly />
+        <button id="copyRouteLink" class="btn-copy"><i class="fas fa-copy"></i></button>
+      </div>
+      <div class="modal-btns" style="margin-top:12px">
+        <button id="shareRouteWA" class="btn-wa-full"><i class="fab fa-whatsapp"></i> Share on WhatsApp</button>
+        <button id="closeShareRoute" class="btn-ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- SHAKE DETECTION AUDIO -->
+  <audio id="alertSound" preload="auto">
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+  </audio>
+
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
