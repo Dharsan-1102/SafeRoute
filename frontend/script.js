@@ -262,20 +262,17 @@ function initMap() {
     });
 }
 
-function buildStyle(dark) {
+function buildStyle() {
     return {
         version: 8,
         glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
         sources: {
             osm: {
                 type: 'raster',
-                tiles: dark
-                    ? ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                       'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png']
-                    : ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                       'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png'],
                 tileSize: 256,
-                attribution: dark ? '© CartoDB © OSM' : '© OpenStreetMap'
+                attribution: '© OpenStreetMap'
             }
         },
         layers: [{ id: 'bg', type: 'raster', source: 'osm' }]
@@ -290,14 +287,15 @@ function applyMapStyle(dark) {
         const icon = btn.querySelector('i');
         if (icon) icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
     }
-    map.setStyle(buildStyle(dark));
-    map.once('styledata', () => {
-        addDangerZones();
-        addHeatmapLayer();
-        addSafeZoneLayer();
-        addRiskOverlayLayer();
-        if (userLocation) addUserMarker(userLocation.lat, userLocation.lng);
-    });
+    
+    const mapEl = document.getElementById('map');
+    if (mapEl) {
+        if (dark) {
+            mapEl.style.filter = 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)';
+        } else {
+            mapEl.style.filter = 'none';
+        }
+    }
 }
 
 // ============================================================
